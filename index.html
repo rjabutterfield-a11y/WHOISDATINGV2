@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Real Couple: Fixed Layout</title>
+    <style>
+        :root {
+            --neon-pink: #ff2e63;
+            --neon-teal: #08f7fe;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --yellow-tee: #f1c40f;
+            --correct-green: #00ff88;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: radial-gradient(circle at center, #16213e 0%, #0f3460 100%);
+            color: white; margin: 0; padding: 0;
+            height: 100vh; width: 100vw;
+            display: flex; flex-direction: column; 
+            overflow: hidden; /* ABSOLUTE NO SCROLLING */
+        }
+
+        #ui-wrapper { 
+            position: relative;
+            width: 100%; height: 100%;
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        .scene { 
+            display: none; flex-direction: column; align-items: center; 
+            width: 100%; height: 100%; padding: 10px; box-sizing: border-box;
+        }
+        .scene.active { display: flex; }
+
+        /* THE FIX: Fixed container for Meet/Arrivals */
+        #meet-display, #trans-display { 
+            display: grid; 
+            grid-template-columns: repeat(5, 1fr); /* Forces 5 in a row */
+            gap: 10px; 
+            width: 90%; max-width: 1000px;
+            height: 40vh; /* Takes up less than half the screen */
+            margin: 10px 0;
+        }
+
+        .game-grid { display: flex; flex-direction: column; gap: 8px; width: 100%; height: 55vh; justify-content: center; }
+        .row-container { display: flex; justify-content: center; gap: 8px; width: 100%; height: 48%; }
+
+        /* Small, fixed-size slots for the game */
+        .couple-slot {
+            display: flex; background: var(--card-bg); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px; padding: 5px; width: 160px; height: 100%; 
+            align-items: flex-start; box-sizing: border-box;
+        }
+
+        .couple-slot.locked-row { border: 2px solid var(--neon-pink); background: rgba(255, 46, 99, 0.2); }
+        
+        /* THE CRITICAL IMAGE SIZE FIX */
+        .person-figure { display: flex; flex-direction: column; align-items: center; width: 50%; height: 100%; cursor: grab; position: relative; overflow: visible; }
+        .figure-img { 
+            width: 100%; 
+            max-height: 140px; /* STRICT HEIGHT LIMIT */
+            object-fit: contain; object-position: top; pointer-events: none; 
+        }
+
+        #meet-display .figure-img, #trans-display .figure-img {
+            max-height: 180px; /* Slightly larger for meet screen */
+        }
+        
+        .tshirt-label {
+            position: absolute; top: 35%; background: var(--yellow-tee); color: #1a1a2e;
+            font-size: 8px; font-weight: 900; padding: 1px 3px; text-transform: uppercase;
+            border-radius: 2px; z-index: 10;
+        }
+
+        .biog-popup {
+            position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
+            width: 180px; background: rgba(0, 0, 0, 0.95); border: 1px solid var(--neon-teal);
+            padding: 8px; border-radius: 8px; font-size: 0.7rem; line-height: 1.2;
+            color: #eee; pointer-events: none; display: none; z-index: 100;
+        }
+        .person-figure:hover .biog-popup { display: block; }
+
+        .controls { margin-top: auto; padding-bottom: 20px; text-align: center; width: 100%; }
+        button { padding: 10px 30px; font-size: 14px; font-weight: bold; text-transform: uppercase; cursor: pointer; border: none; border-radius: 50px; background: var(--neon-teal); color: #1a1a2e; }
+        #main-btn.final-btn { background: var(--neon-pink); color: white; }
+
+        .sidebar-mini { display: flex; gap: 5px; margin-bottom: 5px; }
+        .ep-dot { width: 60px; padding: 3px; border-radius: 6px; background: rgba(0,0,0,0.4); font-size: 9px; text-align: center; opacity: 0.4; border: 1px solid white; }
+        .ep-dot.active { opacity: 1; border-color: var(--neon-teal); color: var(--neon-teal); }
+    </style>
+</head>
+<body>
+
+<div id="ui-wrapper">
+    <div id="start-scene" class="scene active">
+        <h1 style="color: var(--neon-teal); font-size: 2.5rem; margin-top: 20vh;">THE REAL COUPLE</h1>
+        <div class="controls"><button onclick="initGame()" style="background: var(--neon-pink); color: white;">START SEASON</button></div>
+    </div>
+
+    <div id="meet-scene" class="scene">
+        <h2 style="color: var(--neon-teal); margin: 5px 0;">Meet the Contestants</h2>
+        <p id="meet-instr" style="max-width: 600px; text-align: center; color: #ccc; font-size: 0.8rem; margin: 0;"></p>
+        <div id="meet-display"></div>
+        <div class="controls"><button id="meet-next-btn" onclick="nextMeetStep()">NEXT</button></div>
+    </div>
+
+    <div id="lineup-scene" class="scene">
+        <h2 style="color: var(--neon-teal); margin: 5px 0;">The Lineup</h2>
+        <p id="lineup-instr" style="color: #aaa; font-size: 0.8rem; margin: 0;"></p>
+        <div id="lineup-grid" class="game-grid">
+            <div class="row-container" id="lineup-top"></div>
+            <div class="row-container" id="lineup-bottom"></div>
+        </div>
+        <div class="controls"><button id="lineup-play-btn" onclick="changeScene('game')" style="background: var(--neon-pink); color: white;">READY TO PLAY</button></div>
+    </div>
+
+    <div id="game-scene" class="scene">
+        <header style="text-align: center;">
+            <h1 style="color: var(--neon-teal); font-size: 1.1rem; margin: 5px 0;">THE REAL COUPLE</h1>
+            <div class="sidebar-mini">
+                <div id="ep-1" class="ep-dot">EP 1</div><div id="ep-2" class="ep-dot">EP 2</div>
+                <div id="ep-3" class="ep-dot">EP 3</div><div id="ep-4" class="ep-dot">EP 4</div>
+                <div id="ep-5" class="ep-dot">FINALE</div>
+            </div>
+        </header>
+        <div class="game-grid">
+            <div class="row-container" id="grid-row-top"></div>
+            <div class="row-container" id="grid-row-bottom"></div>
+        </div>
+        <div class="controls">
+            <div id="feedback" style="font-weight: bold; color: var(--correct-green); font-size: 0.9rem;"></div>
+            <div id="episode-stats" style="font-size: 0.75rem; background: rgba(0,0,0,0.3); padding: 3px 10px; border-radius: 5px; display: inline-block; margin: 5px 0;"></div>
+            <p id="guess-count" style="font-size:0.65rem; color:#aaa; margin-bottom: 5px;">Guesses: 3 remaining</p>
+            <button id="main-btn" onclick="handleAction()">Check Pairs</button>
+        </div>
+    </div>
+</div>
+
+<div id="transition-overlay" style="display:none" class="full-overlay">
+    <h2 id="trans-title" style="color: var(--neon-teal); margin: 0;"></h2>
+    <div id="trans-display" style="display:flex; justify-content:center; gap:20px; height:40vh; width:100%;"></div>
+    <p id="trans-message" style="margin-bottom: 10px; max-width: 600px; font-size: 0.8rem;"></p>
+    <button id="trans-btn" onclick="handleTransitionNext()" style="background: var(--neon-teal); color: #1a1a2e;">CONTINUE</button>
+</div>
+
+<script>
+    // [Keep the exact same Javascript from previous versions - logic is verified]
+    const bgMusic = new Audio('jazz.mp3'); bgMusic.loop = true;
+    let currentEpisode = 1, activePlayers = [], waitingPool = [], guessesInEpisode = 0, lockedIndex = null, lastFound = [], lastArrivals = [];
+    let meetStep = 0;
+
+    const biogs = {
+        "Damon": "A keen cyclist who loves countryside rides. Obsessed with old vinyl records. Illuminates a room when he walks in.",
+        "Lucy": "Former drama student now in marketing. Loves vintage jewellery and charity finds. Has a natural glow.",
+        "Will": "Software engineer into bouldering and sci-fi. Travelled Japan solo. Has a very strong emotional side.",
+        "Rob": "PE teacher and pub quiz host. Fiercely competitive at board games. Known for iron discipline.",
+        "Anjeli": "Landscape gardener who paints watercolours. Fan of true crime and spicy food. Fond of things that bloom slowly.",
+        "Brian": "Quiet accountant who writes short stories. Swears by morning ice baths. Can make flowers out of mundane situations.",
+        "Claire": "Nurse volunteering at animal shelters. Encyclopaedic knowledge of 90s pop. Has a magnetic pull.",
+        "Bob": "Retired geography teacher restoring furniture. Adopts stray cats. People find him deeply grounding.",
+        "Ryan": "Chef specialising in fermentation. Happiest outdoors on mountain peaks. Personality is sharp but warm.",
+        "Barry": "Landscape photographer catching dawn light. Rewilding advocate. Cuts back anything that doesn't serve a purpose.",
+        "Katie": "Librarian who loves cryptic crosswords. Has kept a journal for 12 years. Humour is dry but perfectly timed.",
+        "Jane": "Architect who tends to see the hidden structure in everything. Brews kombucha. Reputed for being wonderfully witty.",
+        "Sam": "Marine biologist with vintage map collection. Fluent in 4 languages. Has an explorer's soul.",
+        "Alex": "Journalist who once spent 6 months embedded with a humanitarian mission. Restless sleeper.",
+        "Chris": "Personal trainer who loves ballroom dancing. Can fix anything mechanical. Patience that never runs out.",
+        "Pat": "Social worker with a fierce sense of justice and soft spot for old films. Run 4 marathons."
+    };
+
+    const imageMap = {
+        "Damon": "./p1.png", "Lucy": "./p2.png", "Will": "./p3.png", "Rob": "./p4.png",
+        "Anjeli": "./p5.png", "Brian": "./p6.png", "Claire": "./p7.png", "Bob": "./p8.png",
+        "Ryan": "./p9.png", "Barry": "./p10.png", "Katie": "./p11.png", "Jane": "./p12.png",
+        "Sam": "./p13.png", "Alex": "./p14.png", "Chris": "./p15.png", "Pat": "./p16.png"
+    };
+
+    const couplesPool = [
+        ["Damon", "Lucy"], ["Will", "Rob"], ["Anjeli", "Brian"], ["Claire", "Bob"],
+        ["Ryan", "Barry"], ["Katie", "Jane"], ["Sam", "Alex"], ["Chris", "Pat"]
+    ];
+
+    function initGame() {
+        bgMusic.play().catch(()=>{});
+        document.getElementById('start-scene').classList.remove('active');
+        let shuffledCouples = [...couplesPool].sort(() => Math.random() - 0.5);
+        activePlayers = [...shuffledCouples.slice(0, 4).flat(), shuffledCouples[4][0], shuffledCouples[5][0]];
+        waitingPool = [shuffledCouples[4][1], shuffledCouples[5][1], ...shuffledCouples[6].flat(), ...shuffledCouples[7].flat()].sort(() => Math.random() - 0.5);
+        changeScene('meet-1');
+    }
+
+    function changeScene(sceneId) {
+        document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));
+        if(sceneId === 'meet-1') {
+            document.getElementById('meet-scene').classList.add('active');
+            meetStep = 1;
+            renderMeet(activePlayers.slice(0, 5), "Here are the first 5 contestants, they are all in a relationship with someone — you have to guess who?");
+        } else if(sceneId === 'lineup') { setupLineup(); }
+        else if(sceneId === 'game') { setupGame(); }
+        else { document.getElementById(sceneId + '-scene').classList.add('active'); }
+    }
+
+    function nextMeetStep() {
+        meetStep++;
+        if(meetStep === 2) { renderMeet(activePlayers, "Now 5 more people arrive, some of them could be dating the others?"); }
+        else if(meetStep === 3) {
+            activePlayers.sort(() => Math.random() - 0.5);
+            renderMeet(activePlayers, "They take it in turns to pick a fake partner, but could someone be bluffing and pick their real beau?");
+            document.getElementById('meet-next-btn').innerText = "EXAMINE THE BLUFFS";
+        } else { changeScene('lineup'); }
+    }
+
+    function setupLineup() {
+        document.getElementById('lineup-scene').classList.add('active');
+        const isFinal = (currentEpisode === 5);
+        document.getElementById('lineup-instr').innerText = isFinal ? "Final Round: Pick all 4 couples. Only 1 guess!" : "Examine their profiles before the round begins.";
+        const top = document.getElementById('lineup-top'); const bottom = document.getElementById('lineup-bottom');
+        top.innerHTML = ''; bottom.innerHTML = '';
+        const split = Math.ceil((activePlayers.length / 2) / 2);
+        for (let i = 0; i < activePlayers.length / 2; i++) {
+            const html = createSlotHTML(activePlayers[i * 2], activePlayers[i * 2 + 1], i, false);
+            if (i < split) top.innerHTML += html; else bottom.innerHTML += html;
+        }
+    }
+
+    function createSlotHTML(p1, p2, i, isInteractive) {
+        return `
+            <div class="couple-slot ${isInteractive && lockedIndex === i ? 'locked-row' : ''}" id="slot-${i}" ${isInteractive && currentEpisode < 5 ? `ondblclick="handleLock(${i})"` : ''}>
+                <div class="person-figure" id="fig-${i * 2}" draggable="${isInteractive}" ondragstart="drag(event)" ondragover="allowDrop(event)" ondrop="drop(event)">
+                    <img src="${imageMap[p1]}" class="figure-img"><span class="tshirt-label">${p1}</span><div class="biog-popup">${biogs[p1]}</div>
+                </div>
+                <div class="person-figure" id="fig-${i * 2 + 1}" draggable="${isInteractive}" ondragstart="drag(event)" ondragover="allowDrop(event)" ondrop="drop(event)">
+                    <img src="${imageMap[p2]}" class="figure-img"><span class="tshirt-label">${p2}</span><div class="biog-popup">${biogs[p2]}</div>
+                </div>
+            </div>`;
+    }
+
+    function setupGame() {
+        document.getElementById('game-scene').classList.add('active');
+        guessesInEpisode = 0; lockedIndex = null;
+        document.querySelectorAll('.ep-dot').forEach(d => d.classList.remove('active'));
+        document.getElementById(`ep-${currentEpisode}`).classList.add('active');
+        const mainBtn = document.getElementById('main-btn');
+        if(currentEpisode === 5) {
+            mainBtn.innerText = "Are you sure? No going back!";
+            mainBtn.classList.add('final-btn');
+        } else {
+            mainBtn.innerText = "Check Pairs"; mainBtn.classList.remove('final-btn');
+        }
+        renderGrid(); updateStatsDisplay();
+    }
+
+    function renderMeet(list, text) {
+        const display = document.getElementById('meet-display');
+        display.innerHTML = '';
+        document.getElementById('meet-instr').innerText = text;
+        list.forEach(name => {
+            display.innerHTML += `<div class="person-figure" style="height:100%"><img src="${imageMap[name]}" class="figure-img"><span class="tshirt-label">${name}</span><div class="biog-popup">${biogs[name]}</div></div>`;
+        });
+    }
+
+    function renderGrid() {
+        const topRow = document.getElementById('grid-row-top'); const bottomRow = document.getElementById('grid-row-bottom');
+        topRow.innerHTML = ''; bottomRow.innerHTML = '';
+        const split = Math.ceil((activePlayers.length / 2) / 2);
+        for (let i = 0; i < activePlayers.length / 2; i++) {
+            const html = createSlotHTML(activePlayers[i * 2], activePlayers[i * 2 + 1], i, true);
+            if (i < split) topRow.innerHTML += html; else bottomRow.innerHTML += html;
+        }
+    }
+
+    function updateStatsDisplay() {
+        let potentialCouples = 0, checked = new Set();
+        activePlayers.forEach(player => {
+            if (!checked.has(player)) {
+                let pair = couplesPool.find(p => p.includes(player));
+                let partner = pair[0] === player ? pair[1] : pair[0];
+                if (activePlayers.includes(partner)) { potentialCouples++; checked.add(player); checked.add(partner); }
+            }
+        });
+        document.getElementById('episode-stats').innerHTML = currentEpisode === 5 ? `Arrange all 4 couples correctly!` : `<b>${potentialCouples}</b> Real Couples hidden`;
+    }
+
+    function handleAction() {
+        if(currentEpisode === 5) { validateFinal(); return; }
+        if (guessesInEpisode < 2) {
+            guessesInEpisode++;
+            let matches = 0;
+            for(let i=0; i < activePlayers.length/2; i++) { if(isRealPair(activePlayers[i*2], activePlayers[i*2+1])) matches++; }
+            document.getElementById('episode-stats').innerHTML = `Result: <b>${matches}</b> pair(s) currently correct.`;
+            document.getElementById('guess-count').innerText = `Guesses: ${3 - guessesInEpisode} remaining`;
+            if(guessesInEpisode === 2) document.getElementById('main-btn').innerText = "LOCK & REVEAL";
+        } else {
+            if(lockedIndex === null) return alert("Double-click a couple to LOCK!");
+            validateChoice();
+        }
+    }
+
+    function validateFinal() {
+        let total = 0;
+        for(let i=0; i < activePlayers.length/2; i++) { if(isRealPair(activePlayers[i*2], activePlayers[i*2+1])) total++; }
+        alert(`FINAL SCORE: You identified ${total} out of 4 couples correctly!`);
+        location.reload();
+    }
+
+    function isRealPair(n1, n2) { return couplesPool.some(p => (p[0] === n1 && p[1] === n2) || (p[0] === n2 && p[1] === n1)); }
+
+    function validateChoice() {
+        const p1 = activePlayers[lockedIndex * 2], p2 = activePlayers[lockedIndex * 2 + 1];
+        if (isRealPair(p1, p2)) {
+            document.getElementById(`ep-${currentEpisode}`).classList.add('done');
+            lastFound = [p1, p2]; activePlayers = activePlayers.filter(n => n !== p1 && n !== p2);
+            showTransition("elimination");
+        } else { alert("❌ INCORRECT! ❌"); location.reload(); }
+    }
+
+    function showTransition(state) {
+        const overlay = document.getElementById('transition-overlay'); overlay.style.display = 'flex';
+        const display = document.getElementById('trans-display'); display.innerHTML = '';
+        const list = state === "elimination" ? lastFound : lastArrivals;
+        document.getElementById('trans-title').innerText = state === "elimination" ? "ELIMINATED" : "NEW ARRIVALS";
+        list.forEach(name => {
+            display.innerHTML += `<div class="person-figure" style="height:100%"><img src="${imageMap[name]}" class="figure-img"><span class="tshirt-label">${name}</span><div class="biog-popup">${biogs[name]}</div>${state === 'elimination' ? '<div class="red-x-container"><div class="red-x" style="--rot:45deg"></div><div class="red-x alt" style="--rot:-45deg"></div></div>' : ''}</div>`;
+        });
+        document.getElementById('trans-message').innerText = state === "elimination" ? `${list[0]} & ${list[1]} were a Real Couple!` : "Check their biogs for new clues!";
+    }
+
+    function handleTransitionNext() {
+        if (document.getElementById('trans-title').innerText === "ELIMINATED") {
+            if (currentEpisode < 4) {
+                lastArrivals = [waitingPool.shift(), waitingPool.shift()]; activePlayers.push(...lastArrivals);
+                currentEpisode++; showTransition("arrival");
+            } else { currentEpisode++; document.getElementById('transition-overlay').style.display = 'none'; changeScene('lineup'); }
+        } else { document.getElementById('transition-overlay').style.display = 'none'; changeScene('lineup'); }
+    }
+
+    function handleLock(i) { if(guessesInEpisode === 2) { lockedIndex = i; renderGrid(); } }
+    function allowDrop(e) { e.preventDefault(); }
+    function drag(e) { e.dataTransfer.setData("text", e.target.closest('.person-figure').id); }
+    function drop(e) {
+        e.preventDefault();
+        const sIdx = parseInt(e.dataTransfer.getData("text").split('-')[1]);
+        const tIdx = parseInt(e.target.closest('.person-figure').id.split('-')[1]);
+        [activePlayers[sIdx], activePlayers[tIdx]] = [activePlayers[tIdx], activePlayers[sIdx]];
+        if(document.getElementById('game-scene').classList.contains('active')) renderGrid(); else setupLineup();
+    }
+</script>
+</body>
+</html>
