@@ -66,69 +66,81 @@
 
         .full-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.98); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 500; text-align: center; padding: 20px; }
         
-        /* New Danger Zone Style */
-        .danger-img { max-height: 65vh; border: 5px solid var(--neon-pink); box-shadow: 0 0 30px var(--neon-pink); margin-bottom: 20px; border-radius: 15px; }
+        /* Danger Zone Styles */
+        .danger-img { max-height: 70vh; border: 4px solid white; box-shadow: 0 0 20px rgba(255,255,255,0.2); margin-bottom: 20px; border-radius: 5px; }
+        .flicker { animation: flicker 0.2s infinite; }
+        @keyframes flicker { 0% { opacity: 0.9; } 50% { opacity: 1; } 100% { opacity: 0.8; } }
+
+        /* RED CROSS ANIMATION */
+        .red-x-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 20; }
+        .red-x { 
+            position: absolute; width: 100%; height: 10px; background: var(--neon-pink); top: 50%; left: 0; 
+            transform: rotate(var(--rot)) scaleX(0); animation: strike 0.5s forwards ease-in-out; 
+            box-shadow: 0 0 10px var(--neon-pink);
+        }
+        @keyframes strike { to { transform: rotate(var(--rot)) scaleX(1.2); } }
     </style>
 </head>
 <body>
 
-<div id="start-scene" class="scene active">
-    <h1 style="color: var(--neon-teal); font-size: 3rem; letter-spacing: 5px;">THE REAL COUPLE</h1>
-    <p>THE ULTIMATE BLUFFING GAME</p>
-    <button onclick="initGame()" style="background: var(--neon-pink); color: white; padding: 20px 50px;">START SEASON</button>
-</div>
-
-<div id="meet-scene" class="scene">
-    <h2 id="meet-title" style="color: var(--neon-teal); margin: 0;">Meet the Contestants</h2>
-    <p id="meet-instr" style="max-width: 600px; text-align: center; color: #ccc; margin-bottom: 10px; min-height: 2em;"></p>
-    <div id="meet-display" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; margin-bottom: 10px; height: 45vh;"></div>
-    <div class="controls"><button id="meet-next-btn" onclick="nextMeetStep()" style="background: var(--neon-teal); color: #1a1a2e;">NEXT</button></div>
-</div>
-
-<div id="lineup-scene" class="scene">
-    <h2 id="lineup-title" style="color: var(--neon-teal); margin: 0;">The Lineup</h2>
-    <p id="lineup-instr" style="color: #aaa; margin-bottom: 10px;">Examine their profiles before the round begins.</p>
-    <div id="lineup-grid" class="game-grid">
-        <div class="row-container" id="lineup-top"></div>
-        <div class="row-container" id="lineup-bottom"></div>
+<div id="ui-wrapper">
+    <div id="start-scene" class="scene active">
+        <h1 style="color: var(--neon-teal); font-size: 3rem; letter-spacing: 5px;">THE REAL COUPLE</h1>
+        <p>THE ULTIMATE BLUFFING GAME</p>
+        <button onclick="initGame()" style="background: var(--neon-pink); color: white; padding: 20px 50px;">START SEASON</button>
     </div>
-    <div class="controls"><button id="lineup-play-btn" onclick="showDangerZone()" style="background: var(--neon-pink); color: white; margin-top: 5px;">READY TO PLAY</button></div>
-</div>
 
-<div id="danger-zone-scene" class="scene">
-    <h1 style="color: var(--neon-pink); letter-spacing: 5px; margin-bottom: 10px;">DANGER ZONE</h1>
-    <img id="danger-photo" src="" class="danger-img">
-    <button onclick="changeScene('game')" style="background: var(--neon-pink); color: white; padding: 15px 40px; font-size: 1.1rem;">Losing couple are in the danger zone.</button>
-</div>
+    <div id="meet-scene" class="scene">
+        <h2 id="meet-title" style="color: var(--neon-teal); margin: 0;">Meet the Contestants</h2>
+        <p id="meet-instr" style="max-width: 600px; text-align: center; color: #ccc; margin-bottom: 10px; min-height: 2em;"></p>
+        <div id="meet-display" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; margin-bottom: 10px; height: 45vh;"></div>
+        <div class="controls"><button id="meet-next-btn" onclick="nextMeetStep()" style="background: var(--neon-teal); color: #1a1a2e;">NEXT</button></div>
+    </div>
 
-<div id="transition-overlay" style="display:none" class="full-overlay">
-    <h2 id="trans-title" style="color: var(--neon-teal);"></h2>
-    <div id="trans-display" style="display:flex; gap:20px; margin:10px; height: 45vh;"></div>
-    <p id="trans-message" style="margin-bottom: 20px; max-width: 600px;"></p>
-    <button id="trans-btn" onclick="handleTransitionNext()" style="background: var(--neon-teal); color: #1a1a2e; padding: 10px 40px;">CONTINUE</button>
-</div>
-
-<div id="game-scene" class="scene">
-    <div id="ui-wrapper">
-        <header>
-            <h1 style="color: var(--neon-teal); font-size: 1.2rem; text-align: center; margin: 0;">THE REAL COUPLE</h1>
-            <div class="sidebar-mini">
-                <div id="ep-1" class="ep-dot">EP 1</div>
-                <div id="ep-2" class="ep-dot">EP 2</div>
-                <div id="ep-3" class="ep-dot">EP 3</div>
-                <div id="ep-4" class="ep-dot">EP 4</div>
-                <div id="ep-5" class="ep-dot">FINALE</div>
-            </div>
-        </header>
-        <div class="game-grid">
-            <div class="row-container" id="grid-row-top"></div>
-            <div class="row-container" id="grid-row-bottom"></div>
+    <div id="lineup-scene" class="scene">
+        <h2 id="lineup-title" style="color: var(--neon-teal); margin: 0;">The Lineup</h2>
+        <p id="lineup-instr" style="color: #aaa; margin-bottom: 10px;">Examine their profiles before the round begins.</p>
+        <div id="lineup-grid" class="game-grid">
+            <div class="row-container" id="lineup-top"></div>
+            <div class="row-container" id="lineup-bottom"></div>
         </div>
-        <div class="controls">
-            <div id="feedback" style="margin-bottom: 2px; font-weight: bold; font-size: 1.1rem; color: var(--correct-green);"></div>
-            <div id="episode-stats" style="font-size: 0.95rem; color: #fff; background: rgba(0,0,0,0.3); padding: 5px 15px; border-radius: 5px; display: inline-block; margin-bottom: 5px;"></div>
-            <p id="guess-count" style="font-size:0.75rem; color:#aaa; margin-bottom: 5px;">Guesses: 3 remaining</p>
-            <button id="main-btn" onclick="handleAction()">Check Pairs</button>
+        <div class="controls"><button id="lineup-play-btn" onclick="showDangerZone()" style="background: var(--neon-pink); color: white; margin-top: 5px;">READY TO PLAY</button></div>
+    </div>
+
+    <div id="danger-zone-scene" class="scene">
+        <img id="danger-photo" src="" class="danger-img flicker">
+        <button onclick="changeScene('game')" style="background: var(--neon-pink); color: white; padding: 15px 40px; font-size: 1.1rem;">Losing couple are in the danger zone.</button>
+    </div>
+
+    <div id="transition-overlay" style="display:none" class="full-overlay">
+        <h2 id="trans-title" style="color: var(--neon-teal);"></h2>
+        <div id="trans-display" style="display:flex; gap:20px; margin:10px; height: 45vh;"></div>
+        <p id="trans-message" style="margin-bottom: 20px; max-width: 600px;"></p>
+        <button id="trans-btn" onclick="handleTransitionNext()" style="background: var(--neon-teal); color: #1a1a2e; padding: 10px 40px;">CONTINUE</button>
+    </div>
+
+    <div id="game-scene" class="scene">
+        <div id="ui-wrapper-game">
+            <header>
+                <h1 style="color: var(--neon-teal); font-size: 1.2rem; text-align: center; margin: 0;">THE REAL COUPLE</h1>
+                <div class="sidebar-mini">
+                    <div id="ep-1" class="ep-dot">EP 1</div>
+                    <div id="ep-2" class="ep-dot">EP 2</div>
+                    <div id="ep-3" class="ep-dot">EP 3</div>
+                    <div id="ep-4" class="ep-dot">EP 4</div>
+                    <div id="ep-5" class="ep-dot">FINALE</div>
+                </div>
+            </header>
+            <div class="game-grid">
+                <div class="row-container" id="grid-row-top"></div>
+                <div class="row-container" id="grid-row-bottom"></div>
+            </div>
+            <div class="controls">
+                <div id="feedback" style="margin-bottom: 2px; font-weight: bold; font-size: 1.1rem; color: var(--correct-green);"></div>
+                <div id="episode-stats" style="font-size: 0.8rem; color: #fff; background: rgba(0,0,0,0.3); padding: 5px 15px; border-radius: 5px; display: inline-block; margin-bottom: 5px;"></div>
+                <p id="guess-count" style="font-size:0.75rem; color:#aaa; margin-bottom: 5px;">Guesses: 3 remaining</p>
+                <button id="main-btn" onclick="handleAction()">Check Pairs</button>
+            </div>
         </div>
     </div>
 </div>
@@ -150,7 +162,7 @@
         "Ryan": "Chef specialising in fermentation. Happiest outdoors on mountain peaks. Personality is sharp but warm.",
         "Barry": "Landscape photographer catching dawn light. Rewilding advocate. Cuts back anything that doesn't serve a purpose.",
         "Katie": "Librarian who loves cryptic crosswords. Has kept a journal for 12 years. Humour is dry but perfectly timed.",
-        "Jane": "Architect who sees hidden structures. Brews kombucha. Reputed for being wonderfully witty.",
+        "Jane": "Architect who tends to see the hidden structure in everything. Brews kombucha. Reputed for being wonderfully witty.",
         "Sam": "Marine biologist with vintage map collection. Fluent in four languages. Has an explorer's soul.",
         "Alex": "Journalist who once spent six months embedded with humanitarian missions. Adventurous nature.",
         "Chris": "Personal trainer who secretly loves ballroom dancing. Can fix almost anything mechanical.",
@@ -193,7 +205,6 @@
         }
     }
 
-    // NEW Logic to cycle through Danger Zone images
     function showDangerZone() {
         const dangerImage = document.getElementById('danger-photo');
         const episodeImages = {
@@ -202,12 +213,10 @@
             3: "Sock Apocalypse.tif",
             4: "Dirty Dance off.tif"
         };
-
         if (currentEpisode < 5) {
             dangerImage.src = episodeImages[currentEpisode];
             changeScene('danger-zone');
         } else {
-            // No danger zone for finale, go straight to game
             changeScene('game');
         }
     }
@@ -233,7 +242,6 @@
         const bottom = document.getElementById('lineup-bottom');
         top.innerHTML = ''; bottom.innerHTML = '';
         const split = Math.ceil((activePlayers.length / 2) / 2);
-
         for (let i = 0; i < activePlayers.length / 2; i++) {
             const p1 = activePlayers[i * 2], p2 = activePlayers[i * 2 + 1];
             const html = createSlotHTML(p1, p2, i, false);
@@ -260,7 +268,6 @@
         guessesInEpisode = 0; lockedIndex = null;
         document.querySelectorAll('.ep-dot').forEach(d => d.classList.remove('active'));
         document.getElementById(`ep-${currentEpisode}`).classList.add('active');
-        
         const mainBtn = document.getElementById('main-btn');
         if(currentEpisode === 5) {
             mainBtn.innerText = "Are you sure? You can't go back after you click!";
@@ -305,24 +312,17 @@
                 if (activePlayers.includes(partner)) { potentialCouples++; checked.add(player); checked.add(partner); }
             }
         });
-        let randos = activePlayers.length - (potentialCouples * 2);
         document.getElementById('feedback').innerText = (currentEpisode === 5) ? "GRAND FINALE" : `EPISODE ${currentEpisode}`;
-        if(currentEpisode === 5) {
-             document.getElementById('episode-stats').innerHTML = `Final Match: Arrange all <b>4</b> couples correctly!`;
-        } else {
-             document.getElementById('episode-stats').innerHTML = `<b>${potentialCouples}</b> Real Couples hidden | <b>${randos}</b> Randos`;
-        }
+        document.getElementById('episode-stats').innerHTML = currentEpisode === 5 ? `Arrange all 4 couples correctly!` : `<b>${potentialCouples}</b> Real Couples hidden`;
     }
 
     function handleAction() {
         if(currentEpisode === 5) { validateFinal(); return; }
         if (guessesInEpisode < 2) {
             guessesInEpisode++;
-            let currentPairsMatched = 0;
-            for(let i=0; i < activePlayers.length/2; i++) {
-                if(isRealPair(activePlayers[i*2], activePlayers[i*2+1])) currentPairsMatched++;
-            }
-            document.getElementById('episode-stats').innerHTML = `Check Result: <b>${currentPairsMatched}</b> pair(s) currently correct.`;
+            let matches = 0;
+            for(let i=0; i < activePlayers.length/2; i++) { if(isRealPair(activePlayers[i*2], activePlayers[i*2+1])) matches++; }
+            document.getElementById('episode-stats').innerHTML = `Result: <b>${matches}</b> pair(s) correct.`;
             document.getElementById('guess-count').innerText = `Guesses: ${3 - guessesInEpisode} remaining`;
             if(guessesInEpisode === 2) document.getElementById('main-btn').innerText = "LOCK & REVEAL";
         } else {
@@ -332,9 +332,9 @@
     }
 
     function validateFinal() {
-        let totalCorrect = 0;
-        for(let i=0; i < activePlayers.length/2; i++) { if(isRealPair(activePlayers[i*2], activePlayers[i*2+1])) totalCorrect++; }
-        alert(`DRAMATIC REVEAL...\n\nYou identified ${totalCorrect} out of 4 couples correctly.`);
+        let total = 0;
+        for(let i=0; i < activePlayers.length/2; i++) { if(isRealPair(activePlayers[i*2], activePlayers[i*2+1])) total++; }
+        alert(`FINAL SCORE: ${total} out of 4 correct.`);
         location.reload();
     }
 
@@ -359,9 +359,15 @@
         document.getElementById('trans-title').innerText = state === "elimination" ? "ELIMINATED" : "MEET THE NEW ARRIVALS";
         document.getElementById('trans-title').style.color = state === "elimination" ? "var(--neon-pink)" : "var(--neon-teal)";
         list.forEach(name => {
-            display.innerHTML += `<div class="person-figure" style="height:100%"><img src="${imageMap[name]}" class="figure-img"><span class="tshirt-label">${name}</span><div class="biog-popup">${biogs[name]}</div>${state === 'elimination' ? '<div class="red-x-container"><div class="red-x" style="--rot:45deg"></div><div class="red-x alt" style="--rot:-45deg"></div></div>' : ''}</div>`;
+            display.innerHTML += `
+                <div class="person-figure" style="height:100%">
+                    <img src="${imageMap[name]}" class="figure-img">
+                    <span class="tshirt-label">${name}</span>
+                    <div class="biog-popup">${biogs[name]}</div>
+                    ${state === 'elimination' ? '<div class="red-x-container"><div class="red-x" style="--rot:45deg"></div><div class="red-x alt" style="--rot:-45deg"></div></div>' : ''}
+                </div>`;
         });
-        document.getElementById('trans-message').innerText = state === "elimination" ? `${list[0]} & ${list[1]} were a Real Couple!` : "Check their biogs for new clues!";
+        document.getElementById('trans-message').innerText = state === "elimination" ? `${list[0]} & ${list[1]} were a Real Couple!` : "Check their biogs for clues!";
     }
 
     function handleTransitionNext() {
