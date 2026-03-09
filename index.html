@@ -68,10 +68,8 @@
         
         /* Danger Zone Styles */
         .danger-img { max-height: 70vh; border: 4px solid white; box-shadow: 0 0 20px rgba(255,255,255,0.2); margin-bottom: 20px; border-radius: 5px; }
-        .flicker { animation: flicker 0.2s infinite; }
-        @keyframes flicker { 0% { opacity: 0.9; } 50% { opacity: 1; } 100% { opacity: 0.8; } }
 
-        /* RED CROSS ANIMATION */
+        /* RED CROSS ANIMATION REINSTATED */
         .red-x-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 20; }
         .red-x { 
             position: absolute; width: 100%; height: 10px; background: var(--neon-pink); top: 50%; left: 0; 
@@ -108,7 +106,7 @@
     </div>
 
     <div id="danger-zone-scene" class="scene">
-        <img id="danger-photo" src="" class="danger-img flicker">
+        <img id="danger-photo" src="" class="danger-img">
         <button onclick="changeScene('game')" style="background: var(--neon-pink); color: white; padding: 15px 40px; font-size: 1.1rem;">Losing couple are in the danger zone.</button>
     </div>
 
