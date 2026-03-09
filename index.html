@@ -25,7 +25,6 @@
         .scene { display: none; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; }
         .scene.active { display: flex; }
 
-        /* REFINED: Using vh for height to ensure it fits on all screens */
         .game-grid { display: flex; flex-direction: column; gap: 10px; width: 100%; height: 60vh; justify-content: center; }
         .row-container { display: flex; justify-content: center; gap: 10px; width: 100%; height: 48%; }
 
@@ -67,10 +66,8 @@
 
         .full-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.98); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 500; text-align: center; padding: 20px; }
         
-        .red-x-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 20; }
-        .red-x { position: absolute; width: 100%; height: 10px; background: var(--neon-pink); top: 50%; left: 0; transform: rotate(45deg) scaleX(0); animation: strike 0.5s forwards ease-in-out; }
-        .red-x.alt { transform: rotate(-45deg) scaleX(0); animation-delay: 0.2s; }
-        @keyframes strike { to { transform: rotate(var(--rot)) scaleX(1); } }
+        /* New Danger Zone Style */
+        .danger-img { max-height: 65vh; border: 5px solid var(--neon-pink); box-shadow: 0 0 30px var(--neon-pink); margin-bottom: 20px; border-radius: 15px; }
     </style>
 </head>
 <body>
@@ -95,13 +92,19 @@
         <div class="row-container" id="lineup-top"></div>
         <div class="row-container" id="lineup-bottom"></div>
     </div>
-    <div class="controls"><button id="lineup-play-btn" onclick="changeScene('game')" style="background: var(--neon-pink); color: white; margin-top: 5px;">READY TO PLAY</button></div>
+    <div class="controls"><button id="lineup-play-btn" onclick="showDangerZone()" style="background: var(--neon-pink); color: white; margin-top: 5px;">READY TO PLAY</button></div>
+</div>
+
+<div id="danger-zone-scene" class="scene">
+    <h1 style="color: var(--neon-pink); letter-spacing: 5px; margin-bottom: 10px;">DANGER ZONE</h1>
+    <img id="danger-photo" src="" class="danger-img">
+    <button onclick="changeScene('game')" style="background: var(--neon-pink); color: white; padding: 15px 40px; font-size: 1.1rem;">Losing couple are in the danger zone.</button>
 </div>
 
 <div id="transition-overlay" style="display:none" class="full-overlay">
     <h2 id="trans-title" style="color: var(--neon-teal);"></h2>
     <div id="trans-display" style="display:flex; gap:20px; margin:10px; height: 45vh;"></div>
-    <p id="trans-message" style="margin-bottom: 10px; max-width: 600px;"></p>
+    <p id="trans-message" style="margin-bottom: 20px; max-width: 600px;"></p>
     <button id="trans-btn" onclick="handleTransitionNext()" style="background: var(--neon-teal); color: #1a1a2e; padding: 10px 40px;">CONTINUE</button>
 </div>
 
@@ -147,7 +150,7 @@
         "Ryan": "Chef specialising in fermentation. Happiest outdoors on mountain peaks. Personality is sharp but warm.",
         "Barry": "Landscape photographer catching dawn light. Rewilding advocate. Cuts back anything that doesn't serve a purpose.",
         "Katie": "Librarian who loves cryptic crosswords. Has kept a journal for 12 years. Humour is dry but perfectly timed.",
-        "Jane": "Architect who tends to see the hidden structure in everything. Brews kombucha. Reputed for being wonderfully witty.",
+        "Jane": "Architect who sees hidden structures. Brews kombucha. Reputed for being wonderfully witty.",
         "Sam": "Marine biologist with vintage map collection. Fluent in four languages. Has an explorer's soul.",
         "Alex": "Journalist who once spent six months embedded with humanitarian missions. Adventurous nature.",
         "Chris": "Personal trainer who secretly loves ballroom dancing. Can fix almost anything mechanical.",
@@ -187,6 +190,25 @@
             setupGame();
         } else {
             document.getElementById(sceneId + '-scene').classList.add('active');
+        }
+    }
+
+    // NEW Logic to cycle through Danger Zone images
+    function showDangerZone() {
+        const dangerImage = document.getElementById('danger-photo');
+        const episodeImages = {
+            1: "Flatpack nightmare.tif",
+            2: "clay with me.tif",
+            3: "Sock Apocalypse.tif",
+            4: "Dirty Dance off.tif"
+        };
+
+        if (currentEpisode < 5) {
+            dangerImage.src = episodeImages[currentEpisode];
+            changeScene('danger-zone');
+        } else {
+            // No danger zone for finale, go straight to game
+            changeScene('game');
         }
     }
 
